@@ -9,7 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 # Depend on system install of Gazebo
 find_package(gazebo REQUIRED
-             Eigen3 REQUIRED)
+             Eigen3 REQUIRED
+             Boost  REQUIRED)
 
 include_directories( ./src ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS} ${SDFormat_INCLUDE_DIRS})
 
@@ -30,8 +31,8 @@ include_directories(
 set( SRC_DIR src)
 
 set( plugins
-    virtual_mass_plugin
-    viscous_damping_plugin )
+     VirtualMassPlugin
+     ViscousDampingPlugin )
 
 foreach (src ${plugins})
     add_library(${src} SHARED ${SRC_DIR}/${src}.cpp)

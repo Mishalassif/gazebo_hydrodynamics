@@ -1,12 +1,12 @@
 /**
- *  @file virtual_mass_plugin.cpp
+ *  @file VirtualMassPlugin.cpp
  *  @class VirtualMassPlugin
  *  @brief Model Plugin that simulates the effect of Virtual Mass.
  *         Refer this paper http://cdn.intechopen.com/pdfs/6230/InTech-Dynamic_modelling_and_motion_control_for_underwater_vehicles_with_fins.pdf 
  *  @author Mishal Assif
  */
 
-#include<virtual_mass_plugin.h>
+#include<VirtualMassPlugin.h>
 
 namespace gazebo 
 {

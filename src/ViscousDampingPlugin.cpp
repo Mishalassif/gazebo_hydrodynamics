@@ -1,11 +1,11 @@
 /**
- *  @file viscous_damping_plugin.cpp
+ *  @file ViscousDampingPlugin.cpp
  *  @class ViscousDampingPlugin
  *  @brief Model Plugin that simulates the effect of viscous_damping
  *  @author  Mishal Assif
  */
 
-#include<viscous_damping_plugin.h>
+#include<ViscousDampingPlugin.h>
 
 namespace gazebo 
 {

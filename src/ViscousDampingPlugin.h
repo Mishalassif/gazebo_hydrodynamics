@@ -1,12 +1,12 @@
 /**
- *  @file virtual_mass_plugin.h
- *  @class VirtualMassPlugin
- *  @brief Model Plugin that simulates virtual mass forces
- *  @author Mishal Assif
+ *  @file ViscousDampingPlugin.h
+ *  @class ViscousDampingPlugin
+ *  @brief Model Plugin that simulates buoyancy forces
+ *  @author 2015 Mishal Assif
  */
 
-#ifndef _GAZEBO_VIRTUAL_MASS_PLUGIN_H_
-#define _GAZEBO_VIRTUAL_MASS_PLUGIN_H_
+#ifndef _GAZEBO_VISCOUS_DAMPING_PLUGIN_H_
+#define _GAZEBO_VISCOUS_DAMPING_PLUGIN_H_
 
 #include <boost/bind.hpp>
 
@@ -24,49 +24,45 @@
 
 #include <eigen3/Eigen/Dense>
 
-#define NO_OF_HYDCOEFFS 18
+#define NO_OF_DAMPINGCOEFFS 12 
 
 typedef Eigen::Matrix<double, 6, 6> Matrix6d;
 typedef Eigen::Matrix<double, 6, 1> Vector6d;
 
-const std::string HydroCoefficientIndex[] =
+const std::string DampingCoefficientIndex[] =
 
 {
-    "X_udot",
-    "Y_vdot",
-    "Z_wdot",
-    "K_pdot",
-    "M_qdot",
-    "N_rdot",
-    "X_wdot",
-    "Y_pdot",
-    "Z_qdot",
-    "K_rdot",
-    "M_udot",
-    "N_vdot",
-    "X_qdot",
-    "Y_rdot",
-    "Z_udot",
-    "K_vdot",
-    "M_wdot",
-    "N_vdot"
+    "X_u",
+    "Y_v",
+    "Z_w",
+    "K_p",
+    "L_q",
+    "M_r",
+    "X_uu",
+    "Y_vv",
+    "Z_ww",
+    "K_pp",
+    "L_qq",
+    "M_rr"
 };
 
 namespace gazebo
 {
-    class VirtualMassPlugin : public ModelPlugin
+    class ViscousDampingPlugin : public ModelPlugin
     {
         public:
 
-            VirtualMassPlugin();
-            ~VirtualMassPlugin();
+            ViscousDampingPlugin();
+            ~ViscousDampingPlugin();
 
             void Load( physics::ModelPtr model, sdf::ElementPtr sdf );
                         
         private:
 
-            std::map<int, std::map<std::string, double> > _hydroCoeff;
-            std::map<int, Matrix6d> _addedMassMatrix;
+            std::map<int, std::map<std::string, double> > _dampingCoeff;
+            std::map<int, Matrix6d> _linearDampingMatrix;
+            std::map<int, Matrix6d> _quadraticDampingMatrix;
+    
             physics::PhysicsEnginePtr _physicsEngine;
             physics::ModelPtr _model;
             physics::WorldPtr _world;
@@ -80,10 +76,10 @@ namespace gazebo
             geometry_msgs::Wrench _debugWrenchMsg;
 
             void _OnUpdate();
-            Vector6d _getForceTorque(int linkId, math::Vector3 linearVel, math::Vector3 angularVel,
-                                                 math::Vector3 linearAcc, math::Vector3 angularAcc );
+            Vector6d _getForceTorque(int linkId, math::Vector3 linearVel, math::Vector3 angularVel);
+
     };
 
 }
 
-#endif  // _GAZEBO_VIRTUAL_MASS_PLUGIN_H_
+#endif  // _GAZEBO_VISCOUS_DAMPING_PLUGIN_H_

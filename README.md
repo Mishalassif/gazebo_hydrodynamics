@@ -13,3 +13,5 @@
 * Simulates viscous damping forces
 * Requires 6 Linear and 6 Quadratic damping parameters
 * Default values of damping coefficients are take to be zero
+
+** Both Plugins havent been tested yet **
