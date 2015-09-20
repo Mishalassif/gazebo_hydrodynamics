@@ -3,7 +3,7 @@
 ##Virtual Mass Plugin
 
 * Model Plugin
-* Simulates the effect of Added mass https://en.wikipedia.org/wiki/Added\_mass
+* Simulates the effect of Added mass https://en.wikipedia.org/wiki/Added_mass
 * Requires 18 Hydrodynamic coeffiecients
 * Default values of coefficients are taken to be zero
 
