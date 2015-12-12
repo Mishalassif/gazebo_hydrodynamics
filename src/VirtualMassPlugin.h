@@ -62,7 +62,7 @@ namespace gazebo
             ~VirtualMassPlugin();
 
             void Load( physics::ModelPtr model, sdf::ElementPtr sdf );
-                        
+
         private:
 
             std::map<int, std::map<std::string, double> > _hydroCoeff;
@@ -76,7 +76,7 @@ namespace gazebo
             event::ConnectionPtr _updateConnection;
 
             ros::NodeHandle _nh;
-            ros::Publisher _debugWrenchPublisher; 
+            ros::Publisher _debugWrenchPublisher;
             geometry_msgs::Wrench _debugWrenchMsg;
 
             void _OnUpdate();
@@ -86,4 +86,4 @@ namespace gazebo
 
 }
 
-#endif  // _GAZEBO_VIRTUAL_MASS_PLUGIN_H_
+#endif  //  _GAZEBO_VIRTUAL_MASS_PLUGIN_H_

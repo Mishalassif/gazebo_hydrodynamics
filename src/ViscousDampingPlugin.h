@@ -1,12 +1,14 @@
 /**
- *  @file ViscousDampingPlugin.h
+ *  @file viscous_damping_plugin.h
  *  @class ViscousDampingPlugin
- *  @brief Model Plugin that simulates buoyancy forces
- *  @author 2015 Mishal Assif
+ *  @brief Model Plugin that simulates viscous forces
+ *         Refer this paper for details
+ *         http://cdn.intechopen.com/pdfs/6230/InTech-Dynamic_modelling_and_motion_control_for_underwater_vehicles_with_fins.pdf
+ *  @copyright (c) 2015 Mishal Assif
  */
 
-#ifndef _GAZEBO_VISCOUS_DAMPING_PLUGIN_H_
-#define _GAZEBO_VISCOUS_DAMPING_PLUGIN_H_
+#ifndef _AUV_SIMULATOR_VISCOUS_DAMPING_PLUGIN_H_
+#define _AUV_SIMULATOR_VISCOUS_DAMPING_PLUGIN_H_
 
 #include <boost/bind.hpp>
 
@@ -24,7 +26,9 @@
 
 #include <eigen3/Eigen/Dense>
 
-#define NO_OF_DAMPINGCOEFFS 12 
+#include <BaseModelPlugin.h>
+
+#define NO_OF_DAMPINGCOEFFS 12
 
 typedef Eigen::Matrix<double, 6, 6> Matrix6d;
 typedef Eigen::Matrix<double, 6, 1> Vector6d;
@@ -36,50 +40,59 @@ const std::string DampingCoefficientIndex[] =
     "Y_v",
     "Z_w",
     "K_p",
-    "L_q",
-    "M_r",
+    "M_q",
+    "N_r",
     "X_uu",
     "Y_vv",
     "Z_ww",
     "K_pp",
-    "L_qq",
-    "M_rr"
+    "M_qq",
+    "N_rr"
 };
 
 namespace gazebo
 {
-    class ViscousDampingPlugin : public ModelPlugin
+    class ViscousDampingPlugin : public BaseModelPlugin
     {
-        public:
+      public:
 
-            ViscousDampingPlugin();
-            ~ViscousDampingPlugin();
+        /**
+         * @brief ViscousDampingPlugin Constructor
+         */
+        ViscousDampingPlugin();
+        
+        /**
+         * @brief ViscousDampingPlugin Destructor
+         */
+        ~ViscousDampingPlugin();
 
-            void Load( physics::ModelPtr model, sdf::ElementPtr sdf );
-                        
-        private:
+        /**
+         * @brief Calls BaseClass load and extracts the damping coeffs for
+         *        the links specified in the sdf
+         */
+        void Load( physics::ModelPtr model, sdf::ElementPtr sdf );
 
-            std::map<int, std::map<std::string, double> > _dampingCoeff;
-            std::map<int, Matrix6d> _linearDampingMatrix;
-            std::map<int, Matrix6d> _quadraticDampingMatrix;
-    
-            physics::PhysicsEnginePtr _physicsEngine;
-            physics::ModelPtr _model;
-            physics::WorldPtr _world;
-            physics::LinkPtr  _baseLink;
-            sdf::ElementPtr   _sdf;
+      private:
 
-            event::ConnectionPtr _updateConnection;
+        std::map<int, std::map<std::string, double> > _dampingCoeff;   ///< Maps LinkId to a map of all damping coeffs
+        std::map<int, Matrix6d> _linearDampingMatrix;      ///< Maps LinkId to a 6 matrix of linearDampingCoeffs
+        std::map<int, Matrix6d> _quadraticDampingMatrix;   ///< Maps LinkId to a 6 matrix of quadraticDampingCoeffs 
 
-            ros::NodeHandle _nh;
-            ros::Publisher _debugWrenchPublisher; 
-            geometry_msgs::Wrench _debugWrenchMsg;
+        /*
+         * @brief  Gets force and torque by calling _computeForceTorque and applies it on each link
+         */
+        void _onUpdate();
 
-            void _OnUpdate();
-            Vector6d _getForceTorque(int linkId, math::Vector3 linearVel, math::Vector3 angularVel);
+        /*
+         * @brief  Computes force and torque on the link.For details, refer paper mentioned in the beginning
+         * @param[in] linkId     Id of the link,required to get the damping coefficients
+         * @param[in] linearVel  Linear velocity of the link
+         * @param[in] angularVel Angular velocity of the link
+         */
+        Vector6d _computeForceTorque(int linkId, math::Vector3 linearVel, math::Vector3 angularVel);
 
     };
 
 }
 
-#endif  // _GAZEBO_VISCOUS_DAMPING_PLUGIN_H_
+#endif  // _AUV_SIMULATOR_VISCOUS_DAMPING_PLUGIN_H_

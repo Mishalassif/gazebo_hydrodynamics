@@ -1,19 +1,17 @@
 /**
- *  @file ViscousDampingPlugin.cpp
+ *  @file viscous_damping_plugin.cpp
  *  @class ViscousDampingPlugin
  *  @brief Model Plugin that simulates the effect of viscous_damping
- *  @author  Mishal Assif
+ *  @copyright (c) 2015 Mishal Assif
  */
 
-#include<ViscousDampingPlugin.h>
+#include <ViscousDampingPlugin.h>
 
-namespace gazebo 
+namespace gazebo
 {
 
-
-    ViscousDampingPlugin::ViscousDampingPlugin()
+    ViscousDampingPlugin::ViscousDampingPlugin() : BaseModelPlugin("viscous_damping_plugin")
     {
-        _debugWrenchPublisher = _nh.advertise<geometry_msgs::Wrench>("/gazebo/viscous_damping_plugin/wrench", 2);
     }
 
     ViscousDampingPlugin::~ViscousDampingPlugin()
@@ -22,29 +20,7 @@ namespace gazebo
 
     void ViscousDampingPlugin::Load( physics::ModelPtr model, sdf::ElementPtr sdf )
     {
-        GZ_ASSERT(model != NULL, "Received NULL model pointer");
-        this->_model = model;
-
-        _world = _model->GetWorld();
-        GZ_ASSERT(_world != NULL, "Model is in a NULL world");
-
-        GZ_ASSERT(sdf != NULL, "Received NULL SDF pointer");
-        this->_sdf = sdf;
-
-        this->_baseLink = _model->GetLink("base_link");
-        GZ_ASSERT(_baseLink != NULL, "Received Null baseLink pointer");
-
-        ROS_INFO_STREAM("Started plugin !!!!!!!!!!!!");
-        std::cout<<"Started plugin !!!!!!!!!!!!";
-
-        if(!ros::isInitialized())
-        {
-            ROS_FATAL_STREAM("A ROS node for gazebo has not been initialized"
-                    <<", unable to load plugin: ViscousDampingPlugin. "
-                    <<"Load Gazebo system plugin 'libgazebo_ros_api_plugin.so' "
-                    <<"in the gazebo_ros package");
-            return;
-        }
+        BaseModelPlugin::Load(model, sdf);
 
         if (this->_sdf->HasElement("link"))
         {
@@ -79,7 +55,7 @@ namespace gazebo
                         << "second property block" << std::endl;
                     continue;
                 }
-                
+
                 for(int i=0; i < NO_OF_DAMPINGCOEFFS; i++)
                 {
                     if(linkElem->HasElement(DampingCoefficientIndex[i]))
@@ -99,38 +75,27 @@ namespace gazebo
         for(std::map<int, std::map<std::string, double> >::iterator it = _dampingCoeff.begin();
                 it != _dampingCoeff.end(); ++it)
         {
-            _linearDampingMatrix[it->first] << it->second["X_u"], 0, 0,
-                                           0, 0, 0,
-                                           0, it->second["Y_v"], 0,
-                                           0, 0, 0,
-                                           0, 0, it->second["Z_w"],
-                                           0, 0, 0,
-                                           0, 0, 0,
-                                           it->second["K_p"], 0, 0,
-                                           0, 0, 0,
-                                           0, it->second["M_q"], 0,
-                                           0, 0, 0,
-                                           0, 0, it->second["N_r"] ;
+            _linearDampingMatrix[it->first] << it->second["X_u"], 0, 0, 0, 0, 0,
+                                               0, it->second["Y_v"], 0, 0, 0, 0,
+                                               0, 0, it->second["Z_w"], 0, 0, 0,
+                                               0, 0, 0, it->second["K_p"], 0, 0,
+                                               0, 0, 0, 0, it->second["M_q"], 0,
+                                               0, 0, 0, 0, 0, it->second["N_r"];
             
-            _quadraticDampingMatrix[it->first] << it->second["X_u"], 0, 0,
-                                                  0, 0, 0,
-                                                  0, it->second["Y_v"], 0,
-                                                  0, 0, 0,
-                                                  0, 0, it->second["Z_w"],
-                                                  0, 0, 0,
-                                                  0, 0, 0,
-                                                  it->second["K_p"], 0, 0,
-                                                  0, 0, 0,
-                                                  0, it->second["M_q"], 0,
-                                                  0, 0, 0,
-                                                  0, 0, it->second["N_r"] ;
+            _quadraticDampingMatrix[it->first] << it->second["X_uu"], 0, 0, 0, 0, 0,
+                                                  0, it->second["Y_vv"], 0, 0, 0, 0,
+                                                  0, 0, it->second["Z_ww"], 0, 0, 0,
+                                                  0, 0, 0, it->second["K_pp"], 0, 0,
+                                                  0, 0, 0, 0, it->second["M_qq"], 0,
+                                                  0, 0, 0, 0, 0, it->second["N_rr"];
+
         }
 
         this->_updateConnection = event::Events::ConnectWorldUpdateBegin(
-                boost::bind(&ViscousDampingPlugin::_OnUpdate, this));
+                boost::bind(&ViscousDampingPlugin::_onUpdate, this));
     }
 
-    void ViscousDampingPlugin::_OnUpdate()
+    void ViscousDampingPlugin::_onUpdate()
     {
         std::vector<physics::LinkPtr> links;
         links = this->_model->GetLinks();
@@ -143,7 +108,7 @@ namespace gazebo
             if (this->_dampingCoeff.find(id) != this->_dampingCoeff.end())
             {
 
-                Vector6d dampingForceTorque =  _getForceTorque(id, (*it)->GetRelativeLinearVel(),
+                Vector6d dampingForceTorque =  _computeForceTorque(id, (*it)->GetRelativeLinearVel(),
                                                                    (*it)->GetRelativeAngularVel());
                 force.x = dampingForceTorque(0,0);
                 force.y = dampingForceTorque(1,0);
@@ -153,29 +118,32 @@ namespace gazebo
                 torque.y = dampingForceTorque(4,0);
                 torque.z = dampingForceTorque(5,0);
 
+                force = _roundError(force);
+                torque = _roundError(torque);
+                _publishDebug(force, torque);
                 (*it)->AddRelativeForce(force);
                 (*it)->AddRelativeTorque(torque);
             }
         }
     }
-    
-    Vector6d ViscousDampingPlugin::_getForceTorque(int linkId, math::Vector3 linearVel, math::Vector3 angularVel)
+
+    Vector6d ViscousDampingPlugin::_computeForceTorque(int linkId, math::Vector3 linearVel, math::Vector3 angularVel)
     {
-        
+
         Matrix6d dampingMatrix;
         Matrix6d velocityMatrix;
         Vector6d velocityVector;
         Vector6d forceTorqueVector;
 
-        velocityMatrix << velocityVector, velocityVector, velocityVector,
-                          velocityVector, velocityVector, velocityVector;
+        velocityVector << linearVel.x, linearVel.y, linearVel.z,
+                          angularVel.x, angularVel.y, angularVel.z;
+        velocityMatrix = velocityVector.asDiagonal();
+        velocityMatrix = velocityMatrix.array().abs();
         dampingMatrix = _linearDampingMatrix[linkId] +
                         _quadraticDampingMatrix[linkId]*velocityMatrix;
 
-        velocityVector << linearVel.x, linearVel.y, linearVel.z,
-                          angularVel.x, angularVel.y, angularVel.z; 
-
-        forceTorqueVector = -1*(dampingMatrix * velocityVector); 
+        forceTorqueVector = -1*(dampingMatrix * velocityVector);
         return forceTorqueVector;
     }
+    GZ_REGISTER_MODEL_PLUGIN(ViscousDampingPlugin);
 }

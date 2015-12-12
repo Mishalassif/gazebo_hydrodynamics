@@ -2,13 +2,13 @@
  *  @file VirtualMassPlugin.cpp
  *  @class VirtualMassPlugin
  *  @brief Model Plugin that simulates the effect of Virtual Mass.
- *         Refer this paper http://cdn.intechopen.com/pdfs/6230/InTech-Dynamic_modelling_and_motion_control_for_underwater_vehicles_with_fins.pdf 
+ *         Refer this paper http:// cdn.intechopen.com/pdfs/6230/InTech-Dynamic_modelling_and_motion_control_for_underwater_vehicles_with_fins.pdf
  *  @author Mishal Assif
  */
 
 #include<VirtualMassPlugin.h>
 
-namespace gazebo 
+namespace gazebo
 {
 
     VirtualMassPlugin::VirtualMassPlugin()
@@ -37,7 +37,7 @@ namespace gazebo
         ROS_INFO_STREAM("Started plugin !!!!!!!!!!!!");
         std::cout<<"Started plugin !!!!!!!!!!!!";
 
-        if(!ros::isInitialized())
+        if (!ros::isInitialized())
         {
             ROS_FATAL_STREAM("A ROS node for gazebo has not been initialized"
                     <<", unable to load plugin: VirtualMassPlugin. "
@@ -79,10 +79,10 @@ namespace gazebo
                         << "second property block" << std::endl;
                     continue;
                 }
-                
+
                 for(int i=0; i < NO_OF_HYDCOEFFS; i++)
                 {
-                    if(linkElem->HasElement(HydroCoefficientIndex[i]))
+                    if (linkElem->HasElement(HydroCoefficientIndex[i]))
                     {
                         hydroparam = linkElem->GetElement(HydroCoefficientIndex[i])->Get<double>();
                     }
@@ -159,19 +159,19 @@ namespace gazebo
         double a2 = _hydroCoeff.find(linkId)->second["Y_vdot"]*linearVel.y  +
                     _hydroCoeff.find(linkId)->second["Y_pdot"]*angularVel.x +
                     _hydroCoeff.find(linkId)->second["Y_rdot"]*angularVel.z ;
-        
+
         double a3 = _hydroCoeff.find(linkId)->second["Z_udot"]*linearVel.x +
                     _hydroCoeff.find(linkId)->second["Z_wdot"]*linearVel.z +
                     _hydroCoeff.find(linkId)->second["Z_qdot"]*angularVel.y;
-        
+
         double b1 = _hydroCoeff.find(linkId)->second["K_vdot"]*linearVel.y  +
                     _hydroCoeff.find(linkId)->second["K_pdot"]*angularVel.x +
                     _hydroCoeff.find(linkId)->second["K_rdot"]*angularVel.z ;
-        
+
         double b2 = _hydroCoeff.find(linkId)->second["L_udot"]*linearVel.x +
                     _hydroCoeff.find(linkId)->second["L_wdot"]*linearVel.z +
                     _hydroCoeff.find(linkId)->second["L_qdot"]*angularVel.y;
-        
+
         double b3 = _hydroCoeff.find(linkId)->second["M_vdot"]*linearVel.y  +
                     _hydroCoeff.find(linkId)->second["M_pdot"]*angularVel.x +
                     _hydroCoeff.find(linkId)->second["M_rdot"]*angularVel.z ;
@@ -189,11 +189,11 @@ namespace gazebo
                           a2, -1*a1, 0, b2, -1*b1, 0;
 
         velocityVector << linearVel.x, linearVel.y, linearVel.z,
-                          angularVel.x, angularVel.y, angularVel.z; 
+                          angularVel.x, angularVel.y, angularVel.z;
         accelarationVector << linearAcc.x, linearAcc.y, linearAcc.z,
-                              angularAcc.x, angularAcc.y, angularAcc.z; 
+                              angularAcc.x, angularAcc.y, angularAcc.z;
 
-        forceTorqueVector = -1*(_addedMassMatrix[linkId]*accelarationVector + 
+        forceTorqueVector = -1*(_addedMassMatrix[linkId]*accelarationVector +
                                          coriolisMatrix*velocityVector);
         return forceTorqueVector;
     }
